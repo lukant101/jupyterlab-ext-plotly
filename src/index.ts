@@ -3,7 +3,13 @@ import {
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
 
-import { ICommandPalette, MainAreaWidget } from '@jupyterlab/apputils';
+import { NotebookPanel, INotebookTracker } from '@jupyterlab/notebook';
+
+import {
+  ICommandPalette,
+  MainAreaWidget,
+  ToolbarButton
+} from '@jupyterlab/apputils';
 
 import { Widget } from '@lumino/widgets';
 
@@ -14,8 +20,12 @@ const plugin: JupyterFrontEndPlugin<void> = {
   id: 'plotly-extension:plugin',
   description: 'Take home test from Plotly',
   autoStart: true,
-  requires: [ICommandPalette],
-  activate: (app: JupyterFrontEnd, palette: ICommandPalette) => {
+  requires: [ICommandPalette, INotebookTracker],
+  activate: (
+    app: JupyterFrontEnd,
+    palette: ICommandPalette,
+    notebookTracker: INotebookTracker
+  ) => {
     const newWidget = () => {
       const content = new Widget();
       content.addClass('plotly-widget');
@@ -68,6 +78,21 @@ const plugin: JupyterFrontEndPlugin<void> = {
 
     // Add the command to the palette.
     palette.addItem({ command, category: 'Custom Plotly' });
+
+    let button = new ToolbarButton({
+      label: 'Plotly Dialog',
+      onClick: () => {
+        const command = 'plotly-extension:open-dialog';
+        app.commands.execute(command);
+      }
+    });
+
+    // Add the button to the notebook panel toolbar
+    notebookTracker.widgetAdded.connect((sender, panel) => {
+      if (panel instanceof NotebookPanel) {
+        panel.toolbar.addItem('Plotly Dialog', button);
+      }
+    });
   }
 };
 
